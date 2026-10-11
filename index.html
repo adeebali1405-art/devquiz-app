@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DevQuiz | Web Development Quiz App by M.Adeeb Ali Softwer Developer</title>
+  <meta name="description" content="DevQuiz is a fast, accessible web development quiz built with HTML, CSS and JavaScript. Timed questions, instant explanations, streaks and a final score." />
+  <meta name="theme-color" content="#eef0f7" />
+  <meta property="og:title" content="DevQuiz | Web Development Quiz App" />
+  <meta property="og:description" content="Test your HTML, CSS and JavaScript basics. Timed questions, instant explanations, streaks and a final score." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b3df5'/%3E%3Cpath d='M10.5 16.5l3.8 3.8 7.2-8' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Apply the saved theme before first paint to avoid a flash -->
+  <script>
+    try {
+      const saved = JSON.parse(localStorage.getItem('devquiz.theme'));
+      const dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    } catch { /* storage unavailable: keep default */ }
+  </script>
+
+  <style>
+    /* ---------- Design tokens ---------- */
+    :root {
+      --bg: #eef0f7;
+      --dot: rgba(20, 23, 43, 0.07);
+      --surface: #ffffff;
+      --ink: #14172b;
+      --muted: #565b78;
+      --line: #d9dceb;
+      --accent: #5b3df5;
+      --accent-ink: #ffffff;
+      --accent-soft: #ebe7ff;
+      --good: #0b7a41;
+      --good-soft: #dcf4e6;
+      --bad: #c7292e;
+      --bad-soft: #fde5e6;
+      --warn: #b45309;
+      --radius: 22px;
+      --shadow: 0 1px 0 rgba(20, 23, 43, 0.04), 0 18px 40px -18px rgba(20, 23, 43, 0.25);
+      --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+      --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      color-scheme: light;
+    }
+
+    :root[data-theme='dark'] {
+      --bg: #0d0f1f;
+      --dot: rgba(255, 255, 255, 0.05);
+      --surface: #171a31;
+      --ink: #eceefb;
+      --muted: #a0a6c9;
+      --line: #2b3054;
+      --accent: #8f7fff;
+      --accent-ink: #0d0f1f;
+      --accent-soft: #28234f;
+      --good: #4ade9a;
+      --good-soft: #12342a;
+      --bad: #ff7075;
+      --bad-soft: #3b1c26;
+      --warn: #fbbf24;
+      --shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+      color-scheme: dark;
+    }
+
+    /* ---------- Base ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.55;
+      color: var(--ink);
+      background-color: var(--bg);
+      background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+      background-size: 22px 22px;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 10px; }
+
+    .icon {
+      width: 1.25em;
+      height: 1.25em;
+      flex: none;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      padding: 0.1em 0.4em;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    /* ---------- Layout ---------- */
+    .shell {
+      width: min(100% - 32px, 720px);
+      min-height: 100dvh;
+      margin-inline: auto;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 20px;
+      padding-block: 20px;
+    }
+
+    .top { display: flex; align-items: center; justify-content: space-between; }
+
+    .brand { display: flex; align-items: center; gap: 12px; font: 800 1.25rem var(--font-display); letter-spacing: -0.01em; }
+    .logo { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
+
+    .icon-btn {
+      display: grid; place-items: center; width: 44px; height: 44px;
+      border-radius: 12px; border: 1.5px solid var(--line);
+      background: var(--surface); color: var(--ink); cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+    .icon-btn:hover { border-color: var(--accent); }
+
+    main { display: grid; align-content: center; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: clamp(20px, 4vw, 36px);
+    }
+
+    .screen:not([hidden]) { animation: screen-in 0.28s ease-out; }
+    @keyframes screen-in { from { opacity: 0; transform: translateY(8px); } }
+
+    h1, h2 { font-family: var(--font-display); letter-spacing: -0.02em; margin: 0; }
+    h1 { font-size: clamp(2rem, 6vw, 3rem); font-weight: 800; line-height: 1.05; }
+    h1:focus, h2:focus { outline: none; }
+    .lead { color: var(--muted); font-size: 1.05rem; max-width: 52ch; margin: 14px 0 0; }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 24px; border: 0; border-radius: 14px;
+      font: 600 1rem var(--font-body); cursor: pointer;
+      transition: transform 0.1s ease, filter 0.15s ease, opacity 0.15s ease;
+    }
+    .btn.primary { background: var(--accent); color: var(--accent-ink); }
+    .btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .actions { display: flex; justify-content: flex-end; margin-top: 22px; }
+
+    /* ---------- Start screen ---------- */
+    .facts { list-style: none; margin: 28px 0; padding: 0; display: grid; gap: 12px; }
+    .facts li { display: flex; align-items: center; gap: 12px; font-weight: 500; }
+    .facts .badge { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
+    .best-line { margin: 0 0 20px; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .best-line .icon { color: var(--warn); }
+
+    /* ---------- Quiz screen ---------- */
+    .quiz-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .count { margin: 0; font: 800 1.6rem var(--font-display); letter-spacing: -0.02em; }
+    .count .of { color: var(--muted); font-weight: 500; font-size: 1.05rem; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 0.9rem; }
+    .chip.streak { background: var(--bad-soft); color: var(--bad); }
+
+    .progress { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin-bottom: 24px; }
+    .progress span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--accent); transition: width 0.35s ease; }
+
+    .q-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .q-top h2 { font-size: clamp(1.3rem, 3.4vw, 1.7rem); font-weight: 700; line-height: 1.25; }
+
+    .timer { position: relative; width: 52px; height: 52px; flex: none; }
+    .timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .timer circle { fill: none; stroke-width: 4; }
+    .timer .track { stroke: var(--line); }
+    .timer .bar { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.25s linear, stroke 0.2s ease; }
+    .timer span { position: absolute; inset: 0; display: grid; place-items: center; font: 700 0.95rem var(--font-display); font-variant-numeric: tabular-nums; }
+    .timer.urgent .bar { stroke: var(--bad); }
+    .timer.urgent span { color: var(--bad); }
+
+    .options { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+
+    .option {
+      display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px;
+      width: 100%; padding: 14px 16px; text-align: left;
+      border: 1.5px solid var(--line); border-radius: 14px;
+      background: var(--surface); color: var(--ink);
+      font: 500 1rem var(--font-body); cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+    }
+    .option:hover:not([aria-disabled='true']) { border-color: var(--accent); background: var(--accent-soft); }
+    .option:active:not([aria-disabled='true']) { transform: scale(0.995); }
+    .option[aria-disabled='true'] { cursor: default; }
+    .option[aria-disabled='true']:not(.is-correct):not(.is-wrong) { opacity: 0.55; }
+
+    .key { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); font: 700 0.9rem var(--font-display); }
+    .option.sym .label { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 600; }
+    .status { width: 22px; height: 22px; opacity: 0; }
+
+    .option.is-correct { border-color: var(--good); background: var(--good-soft); }
+    .option.is-correct .status { opacity: 1; color: var(--good); }
+    .option.is-correct .key { background: var(--good); color: var(--surface); }
+    .option.is-wrong { border-color: var(--bad); background: var(--bad-soft); }
+    .option.is-wrong .status { opacity: 1; color: var(--bad); }
+    .option.is-wrong .key { background: var(--bad); color: var(--surface); }
+
+    .feedback { display: flex; gap: 12px; align-items: flex-start; margin-top: 18px; padding: 14px 16px; border-radius: 14px; font-size: 0.97rem; }
+    .feedback p { margin: 0; }
+    .feedback .icon { margin-top: 2px; }
+    .feedback.good { background: var(--good-soft); color: var(--ink); }
+    .feedback.good .icon { color: var(--good); }
+    .feedback.bad { background: var(--bad-soft); color: var(--ink); }
+    .feedback.bad .icon { color: var(--bad); }
+
+    /* ---------- Result screen ---------- */
+    .result { text-align: center; }
+    .ring-wrap { position: relative; width: 190px; height: 190px; margin: 0 auto 20px; }
+    .ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-wrap circle { fill: none; stroke-width: 12; }
+    .ring-wrap .track { stroke: var(--line); }
+    .ring-wrap .bar { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1); }
+    .ring-text { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+    .ring-text strong { font: 800 2.8rem/1 var(--font-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+    .ring-text span { color: var(--muted); font-weight: 500; margin-top: 4px; }
+
+    .result h2 { font-size: clamp(1.7rem, 5vw, 2.2rem); font-weight: 800; }
+    .result .lead { margin-inline: auto; }
+    .new-best { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 6px 14px; border-radius: 999px; background: var(--good-soft); color: var(--good); font-weight: 700; font-size: 0.9rem; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 26px 0; }
+    .stat { padding: 14px; border: 1px solid var(--line); border-radius: 16px; text-align: left; }
+    .stat dt { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.88rem; font-weight: 500; }
+    .stat dd { margin: 4px 0 0; font: 800 1.7rem var(--font-display); letter-spacing: -0.02em; }
+    .stat.good dt .icon { color: var(--good); }
+    .stat.bad dt .icon { color: var(--bad); }
+    .stat.warn dt .icon { color: var(--warn); }
+    .stat.hot dt .icon { color: var(--accent); }
+
+    details.review { text-align: left; border: 1px solid var(--line); border-radius: 16px; padding: 4px 16px; }
+    details.review summary { cursor: pointer; padding: 12px 0; font-weight: 600; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+    details.review summary::-webkit-details-marker { display: none; }
+    details.review summary::after { content: '+'; font: 700 1.3rem var(--font-display); color: var(--accent); }
+    details.review[open] summary::after { content: '\2212'; }
+    .review-list { list-style: none; margin: 0; padding: 0 0 8px; display: grid; gap: 14px; }
+    .review-list li { padding-top: 14px; border-top: 1px solid var(--line); }
+    .review-list .rq { margin: 0 0 6px; font-weight: 600; }
+    .review-list .ra { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 0.93rem; color: var(--muted); }
+    .review-list .ra.good .icon { color: var(--good); }
+    .review-list .ra.bad .icon { color: var(--bad); }
+
+    .result .actions { justify-content: center; }
+
+    /* ---------- Footer ---------- */
+    footer { text-align: center; color: var(--muted); font-size: 0.88rem; display: grid; gap: 4px; }
+    footer a { color: inherit; font-weight: 600; }
+    kbd { font: 600 0.8rem var(--font-mono); padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); }
+
+    @media (max-width: 520px) {
+      .shell { width: min(100% - 20px, 720px); gap: 14px; }
+      .option { padding: 12px 12px; gap: 10px; }
+      .actions .btn { width: 100%; }
+      .keys-hint { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Icon sprite (inline SVG, no external dependency) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-1.97 2C7.85 19.15 7 20.24 7 22M14 14.66V17c0 .55.47.98 1.97 2 .18.15 1.03 1.24 1.03 3M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-skip" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></symbol>
+  </svg>
+
+  <div class="shell">
+    <header class="top">
+      <div class="brand">
+        <span class="logo"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg></span>
+        <span>DevQuiz by M.Adeeb Ali Softwer Developer</span>
+      </div>
+      <button id="themeBtn" class="icon-btn" type="button" aria-label="Switch to dark theme">
+        <svg class="icon" aria-hidden="true"><use id="themeIcon" href="#i-moon"/></svg>
+      </button>
+    </header>
+
+    <main>
+      <!-- Start -->
+      <section id="screen-start" class="card screen" aria-labelledby="startTitle">
+        <h1 id="startTitle" tabindex="-1">How well do you know the web?</h1>
+        <p class="lead">Answer questions on HTML, CSS and JavaScript. Every answer comes with a short explanation, so you learn as you play.</p>
+        <ul class="facts">
+          <li><span class="badge"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg></span>10 random questions, 4 choices each</li>
+          <li><span class="badge"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg></span>20 seconds per question</li>
+          <li><span class="badge"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg></span>Instant feedback and a full answer review</li>
+        </ul>
+        <p id="bestLine" class="best-line" hidden><svg class="icon" aria-hidden="true"><use href="#i-trophy"/></svg><span></span></p>
+        <button id="startBtn" class="btn primary" type="button">Start quiz <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      </section>
+
+      <!-- Quiz -->
+      <section id="screen-quiz" class="screen" hidden aria-label="Quiz">
+        <div class="quiz-head">
+          <p class="count" aria-live="off"><span id="qNum">1</span><span class="of"> / <span id="qTotal">10</span></span></p>
+          <div class="chips">
+            <span id="streakChip" class="chip streak" hidden><svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg><span id="streak">0</span> in a row</span>
+            <span class="chip"><svg class="icon" aria-hidden="true"><use href="#i-trophy"/></svg><span id="score">0</span> pts</span>
+          </div>
+        </div>
+        <div id="progress" class="progress" role="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0"><span id="bar"></span></div>
+
+        <article class="card">
+          <div class="q-top">
+            <h2 id="question" tabindex="-1"></h2>
+            <div id="timer" class="timer" role="timer" aria-label="Seconds left">
+              <svg viewBox="0 0 44 44" aria-hidden="true"><circle class="track" cx="22" cy="22" r="18"/><circle id="timerBar" class="bar" cx="22" cy="22" r="18"/></svg>
+              <span id="timeLeft">20</span>
+            </div>
+          </div>
+          <ul id="options" class="options"></ul>
+          <div id="feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+          <div class="actions">
+            <button id="nextBtn" class="btn primary" type="button" disabled><span id="nextLabel">Next question</span> <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          </div>
+        </article>
+      </section>
+
+      <!-- Result -->
+      <section id="screen-result" class="card screen result" hidden aria-labelledby="resultTitle">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 160 160" aria-hidden="true"><circle class="track" cx="80" cy="80" r="70"/><circle id="ringBar" class="bar" cx="80" cy="80" r="70"/></svg>
+          <div class="ring-text"><strong id="pct">0%</strong><span id="frac">0 / 10</span></div>
+        </div>
+        <h2 id="resultTitle" tabindex="-1"></h2>
+        <p id="resultMsg" class="lead"></p>
+        <span id="newBest" class="new-best" hidden><svg class="icon" aria-hidden="true"><use href="#i-trophy"/></svg>New personal best</span>
+
+        <dl class="stats">
+          <div class="stat good"><dt><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Correct</dt><dd id="stCorrect">0</dd></div>
+          <div class="stat bad"><dt><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>Incorrect</dt><dd id="stWrong">0</dd></div>
+          <div class="stat warn"><dt><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>Timed out</dt><dd id="stSkipped">0</dd></div>
+          <div class="stat hot"><dt><svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg>Best streak</dt><dd id="stStreak">0</dd></div>
+        </dl>
+
+        <details class="review">
+          <summary>Review your answers</summary>
+          <ol id="reviewList" class="review-list"></ol>
+        </details>
+
+        <div class="actions">
+          <button id="restartBtn" class="btn primary" type="button"><svg class="icon" aria-hidden="true"><use href="#i-restart"/></svg>Restart quiz</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span class="keys-hint">Shortcuts: <kbd>1</kbd>–<kbd>4</kbd> or <kbd>A</kbd>–<kbd>D</kbd> to answer, <kbd>N</kbd> for the next question</span>
+      <span>Built by M.Adeeb Ali Softwer Developer</a> with HTML, CSS and JavaScript</span>
+    </footer>
+  </div>
+
+  <script>
+    'use strict';
+
+    /* ---------- Config ---------- */
+    const TOTAL = 10;        // questions per round
+    const TIME_LIMIT = 20;   // seconds per question
+    const LETTERS = ['A', 'B', 'C', 'D'];
+    const RING_SMALL = 2 * Math.PI * 18;
+    const RING_BIG = 2 * Math.PI * 70;
+
+    /* Add your own questions here: { text, options: [4 items], answer: index of correct option, explain }.
+       Wrap code in `backticks` to render it as inline code. */
+    const BANK = [
+      { text: 'What does HTML stand for?',
+        options: ['Hyper Text Markup Language', 'High Text Machine Language', 'Hyperlink Text Management Language', 'Home Tool Markup Language'],
+        answer: 0, explain: 'HTML is the standard markup language that describes the structure and content of a web page.' },
+      { text: 'Which language is used to style web pages?',
+        options: ['HTML', 'CSS', 'Java', 'SQL'],
+        answer: 1, explain: 'CSS (Cascading Style Sheets) controls colors, fonts, spacing and layout.' },
+      { text: 'Which language is primarily used to add interactivity to web pages?',
+        options: ['CSS', 'HTML', 'JavaScript', 'XML'],
+        answer: 2, explain: 'JavaScript runs in the browser and responds to clicks, input, timers and network data.' },
+      { text: 'Which symbol is used for an ID selector in CSS?',
+        options: ['.', '#', '@', '*'],
+        answer: 1, explain: '`#header` targets the element with `id="header"`. A dot targets classes, and `*` selects everything.' },
+      { text: 'Which HTML element is the semantic choice for a navigation menu?',
+        options: ['`<nav>`', '`<menu-bar>`', '`<navigate>`', '`<links>`'],
+        answer: 0, explain: '`<nav>` tells browsers and screen readers that its content is a block of navigation links.' },
+      { text: 'What does `typeof null` return in JavaScript?',
+        options: ['`"null"`', '`"object"`', '`"undefined"`', '`"number"`'],
+        answer: 1, explain: 'This is a historical quirk kept for backward compatibility. To test for null, use `value === null`.' },
+      { text: 'Which CSS declaration turns an element into a flex container?',
+        options: ['`display: flex`', '`position: flex`', '`flex: container`', '`float: flex`'],
+        answer: 0, explain: '`display: flex` makes the element a flex container and its children flex items.' },
+      { text: 'Which array method returns a new array with every item transformed?',
+        options: ['`forEach()`', '`map()`', '`push()`', '`find()`'],
+        answer: 1, explain: '`map()` returns a new array. `forEach()` only loops and returns `undefined`.' },
+      { text: 'What is the `alt` attribute on an `<img>` tag for?',
+        options: ['A hover animation', 'The border color', 'Alternative text for screen readers and broken images', 'The file size of the image'],
+        answer: 2, explain: 'Alt text describes the image for people using screen readers and is shown if the image fails to load.' },
+      { text: 'Which operator compares both value and type in JavaScript?',
+        options: ['`==`', '`=`', '`===`', '`!=`'],
+        answer: 2, explain: '`===` is strict equality: `5 === "5"` is false, while `5 == "5"` is true.' },
+      { text: 'What does DOM stand for?',
+        options: ['Document Object Model', 'Data Output Method', 'Digital Order Map', 'Display Object Manager'],
+        answer: 0, explain: 'The DOM is the browser\'s tree representation of a page that JavaScript can read and change.' },
+      { text: 'Which HTTP status code means "Not Found"?',
+        options: ['200', '301', '404', '500'],
+        answer: 2, explain: '404 means the server could not find the requested resource. 200 is OK, 301 is a redirect and 500 is a server error.' },
+      { text: 'Which CSS property adds space between an element\'s content and its border?',
+        options: ['`margin`', '`padding`', '`gap`', '`outline`'],
+        answer: 1, explain: '`padding` is inside the border. `margin` is the space outside it.' },
+      { text: 'Which Git command records staged changes as a new snapshot?',
+        options: ['`git push`', '`git commit`', '`git clone`', '`git fetch`'],
+        answer: 1, explain: '`git commit` saves the staged changes to your local history. `git push` then uploads commits to a remote.' },
+    ];
+
+    const TIERS = [
+      { min: 90, title: 'Outstanding', msg: 'You know your web fundamentals very well.' },
+      { min: 70, title: 'Solid work', msg: 'A strong result. Review the misses and try for a perfect round.' },
+      { min: 50, title: 'Getting there', msg: 'You have the basics. Check the review below and play again.' },
+      { min: 0, title: 'Keep practicing', msg: 'Every expert started here. Read the explanations and try again.' },
+    ];
+
+    /* ---------- Helpers ---------- */
+    const $ = (id) => document.getElementById(id);
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const storage = {
+      get(key, fallback = null) {
+        try { const raw = localStorage.getItem(key); return raw === null ? fallback : JSON.parse(raw); }
+        catch { return fallback; }
+      },
+      set(key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+      },
+    };
+
+    const shuffle = (list) => {
+      const a = [...list];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmt = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+    const plain = (s) => s.replace(/`/g, '');
+
+    /* ---------- State & elements ---------- */
+    const state = { questions: [], index: 0, score: 0, streak: 0, bestStreak: 0, locked: false, log: [], deadline: 0, timerId: null };
+
+    const ui = {
+      screens: { start: $('screen-start'), quiz: $('screen-quiz'), result: $('screen-result') },
+      headings: { start: $('startTitle'), quiz: $('question'), result: $('resultTitle') },
+      qNum: $('qNum'), qTotal: $('qTotal'), score: $('score'), streak: $('streak'), streakChip: $('streakChip'),
+      progress: $('progress'), bar: $('bar'), question: $('question'), options: $('options'),
+      feedback: $('feedback'), nextBtn: $('nextBtn'), nextLabel: $('nextLabel'),
+      timer: $('timer'), timerBar: $('timerBar'), timeLeft: $('timeLeft'),
+      ringBar: $('ringBar'), pct: $('pct'), frac: $('frac'), resultTitle: $('resultTitle'), resultMsg: $('resultMsg'),
+      newBest: $('newBest'), stCorrect: $('stCorrect'), stWrong: $('stWrong'), stSkipped: $('stSkipped'), stStreak: $('stStreak'),
+      reviewList: $('reviewList'), review: document.querySelector('details.review'),
+      bestLine: $('bestLine'), themeBtn: $('themeBtn'), themeIcon: $('themeIcon'),
+    };
+
+    ui.timerBar.style.strokeDasharray = RING_SMALL;
+    ui.ringBar.style.strokeDasharray = RING_BIG;
+
+    const current = () => state.questions[state.index];
+    const isLast = () => state.index === state.questions.length - 1;
+    let currentScreen = 'start';
+
+    const showScreen = (name) => {
+      currentScreen = name;
+      Object.entries(ui.screens).forEach(([key, el]) => { el.hidden = key !== name; });
+      ui.headings[name].focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+    };
+
+    /* ---------- Theme ---------- */
+    const applyTheme = (theme) => {
+      document.documentElement.dataset.theme = theme;
+      ui.themeIcon.setAttribute('href', theme === 'dark' ? '#i-sun' : '#i-moon');
+      ui.themeBtn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+      document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0d0f1f' : '#eef0f7';
+    };
+
+    ui.themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      storage.set('devquiz.theme', next);
+    });
+
+    /* ---------- Timer ---------- */
+    const stopTimer = () => { clearInterval(state.timerId); state.timerId = null; };
+
+    const tick = () => {
+      const remaining = Math.max(0, (state.deadline - Date.now()) / 1000);
+      ui.timerBar.style.strokeDashoffset = RING_SMALL * (1 - remaining / TIME_LIMIT);
+      ui.timeLeft.textContent = Math.ceil(remaining);
+      ui.timer.classList.toggle('urgent', remaining <= 5);
+      if (remaining <= 0) choose(-1);
+    };
+
+    const startTimer = () => {
+      stopTimer();
+      state.deadline = Date.now() + TIME_LIMIT * 1000;
+      ui.timerBar.style.strokeDashoffset = 0;
+      ui.timeLeft.textContent = TIME_LIMIT;
+      ui.timer.classList.remove('urgent');
+      state.timerId = setInterval(tick, 250);
+    };
+
+    /* ---------- Quiz flow ---------- */
+    const updateChips = () => {
+      ui.score.textContent = state.score;
+      ui.streak.textContent = state.streak;
+      ui.streakChip.hidden = state.streak < 2;
+    };
+
+    const setStatus = (button, icon) => button.querySelector('use').setAttribute('href', `#i-${icon}`);
+
+    const startQuiz = () => {
+      const picked = shuffle(BANK).slice(0, TOTAL).map((q) => {
+        const options = shuffle(q.options.map((text, i) => ({ text, correct: i === q.answer })));
+        return { ...q, options, answer: options.findIndex((o) => o.correct) };
+      });
+      Object.assign(state, { questions: picked, index: 0, score: 0, streak: 0, bestStreak: 0, locked: false, log: [] });
+      ui.qTotal.textContent = picked.length;
+      ui.progress.setAttribute('aria-valuemax', picked.length);
+      showScreen('quiz');
+      renderQuestion();
+    };
+
+    const renderQuestion = () => {
+      const q = current();
+      state.locked = false;
+      ui.qNum.textContent = state.index + 1;
+      ui.question.innerHTML = fmt(q.text);
+      ui.bar.style.width = `${(state.index / state.questions.length) * 100}%`;
+      ui.progress.setAttribute('aria-valuenow', state.index);
+      updateChips();
+
+      ui.options.replaceChildren(...q.options.map((opt, i) => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option' + (plain(opt.text).length <= 2 ? ' sym' : '');
+        btn.dataset.index = i;
+        btn.innerHTML = `<span class="key" aria-hidden="true">${LETTERS[i]}</span><span class="label">${fmt(opt.text)}</span><svg class="icon status" aria-hidden="true"><use href="#i-check"/></svg>`;
+        btn.setAttribute('aria-label', `Option ${LETTERS[i]}: ${plain(opt.text)}`);
+        btn.addEventListener('click', () => choose(i));
+        li.append(btn);
+        return li;
+      }));
+
+      ui.feedback.hidden = true;
+      ui.feedback.className = 'feedback';
+      ui.nextBtn.disabled = true;
+      ui.nextLabel.textContent = isLast() ? 'See results' : 'Next question';
+      startTimer();
+      ui.question.focus({ preventScroll: true });
+    };
+
+    /* picked: option index, or -1 when time runs out */
+    function choose(picked) {
+      if (state.locked) return;
+      state.locked = true;
+      stopTimer();
+
+      const q = current();
+      const timedOut = picked === -1;
+      const correct = picked === q.answer;
+
+      if (correct) {
+        state.score++;
+        state.streak++;
+        state.bestStreak = Math.max(state.bestStreak, state.streak);
+      } else {
+        state.streak = 0;
+      }
+
+      state.log.push({
+        text: q.text,
+        picked: timedOut ? null : q.options[picked].text,
+        answer: q.options[q.answer].text,
+        correct,
+        timedOut,
+      });
+
+      [...ui.options.children].forEach((li, i) => {
+        const btn = li.firstElementChild;
+        btn.setAttribute('aria-disabled', 'true');
+        if (i === q.answer) { btn.classList.add('is-correct'); setStatus(btn, 'check'); }
+        else if (i === picked) { btn.classList.add('is-wrong'); setStatus(btn, 'x'); }
+      });
+
+      const head = correct ? 'Correct.' : timedOut ? "Time's up." : 'Incorrect.';
+      const detail = correct ? '' : ` The answer is ${fmt(q.options[q.answer].text)}.`;
+      const icon = correct ? 'check' : timedOut ? 'clock' : 'x';
+      ui.feedback.className = `feedback ${correct ? 'good' : 'bad'}`;
+      ui.feedback.innerHTML = `<svg class="icon" aria-hidden="true"><use href="#i-${icon}"/></svg><p><strong>${head}</strong>${detail} ${fmt(q.explain)}</p>`;
+      ui.feedback.hidden = false;
+
+      updateChips();
+      ui.bar.style.width = `${((state.index + 1) / state.questions.length) * 100}%`;
+      ui.progress.setAttribute('aria-valuenow', state.index + 1);
+      ui.nextBtn.disabled = false;
+      ui.nextBtn.focus({ preventScroll: true });
+    }
+
+    const next = () => {
+      if (!state.locked) return;
+      if (isLast()) { showResult(); return; }
+      state.index++;
+      renderQuestion();
+    };
+
+    /* ---------- Results ---------- */
+    const animatePercent = (to) => {
+      if (reduceMotion) { ui.pct.textContent = `${to}%`; return; }
+      const t0 = performance.now();
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / 1000);
+        ui.pct.textContent = `${Math.round(to * (1 - (1 - p) ** 3))}%`;
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+
+    const showResult = () => {
+      const total = state.questions.length;
+      const pct = Math.round((state.score / total) * 100);
+      const tier = TIERS.find((t) => pct >= t.min);
+      const timedOut = state.log.filter((l) => l.timedOut).length;
+      const wrong = state.log.filter((l) => !l.correct && !l.timedOut).length;
+
+      const previous = storage.get('devquiz.best');
+      const beatBest = previous !== null && pct > previous;
+      if (previous === null || pct > previous) storage.set('devquiz.best', pct);
+
+      ui.resultTitle.textContent = tier.title;
+      ui.resultMsg.textContent = tier.msg;
+      ui.frac.textContent = `${state.score} / ${total}`;
+      ui.stCorrect.textContent = state.score;
+      ui.stWrong.textContent = wrong;
+      ui.stSkipped.textContent = timedOut;
+      ui.stStreak.textContent = state.bestStreak;
+      ui.newBest.hidden = !beatBest;
+      ui.review.open = false;
+
+      ui.reviewList.innerHTML = state.log.map((l) => {
+        const yours = l.timedOut ? 'No answer (time ran out)' : l.picked;
+        const rows = [`<p class="ra ${l.correct ? 'good' : 'bad'}"><svg class="icon" aria-hidden="true"><use href="#i-${l.correct ? 'check' : l.timedOut ? 'clock' : 'x'}"/></svg><span>Your answer: ${fmt(yours)}</span></p>`];
+        if (!l.correct) rows.push(`<p class="ra good"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span>Correct answer: ${fmt(l.answer)}</span></p>`);
+        return `<li><p class="rq">${fmt(l.text)}</p>${rows.join('')}</li>`;
+      }).join('');
+
+      showScreen('result');
+
+      // Animate the ring from empty to the final score
+      ui.ringBar.style.transition = 'none';
+      ui.ringBar.style.strokeDashoffset = RING_BIG;
+      ui.pct.textContent = '0%';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        ui.ringBar.style.transition = '';
+        ui.ringBar.style.strokeDashoffset = RING_BIG * (1 - pct / 100);
+        animatePercent(pct);
+      }));
+    };
+
+    /* ---------- Events ---------- */
+    $('startBtn').addEventListener('click', startQuiz);
+    $('restartBtn').addEventListener('click', startQuiz);
+    ui.nextBtn.addEventListener('click', next);
+
+    document.addEventListener('keydown', (e) => {
+      if (currentScreen !== 'quiz' || e.ctrlKey || e.metaKey || e.altKey) return;
+      const key = e.key.toLowerCase();
+      const idx = '1234'.includes(key) && key ? Number(key) - 1 : ['a', 'b', 'c', 'd'].indexOf(key);
+      if (idx >= 0 && idx < 4 && key.length === 1) { choose(idx); return; }
+      if (key === 'n' || key === 'arrowright') next();
+    });
+
+    /* ---------- Init ---------- */
+    applyTheme(document.documentElement.dataset.theme);
+    const best = storage.get('devquiz.best');
+    if (best !== null) {
+      ui.bestLine.querySelector('span').textContent = `Your best score: ${best}%`;
+      ui.bestLine.hidden = false;
+    }
+  </script>
+</body>
+</html>
